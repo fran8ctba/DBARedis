@@ -143,10 +143,12 @@ public class RedisJava {
 										tApelidoDigitado);
 								jedis.set(tApelidoDigitado + ":" + tDtAtualMsg.format(sFormatadorHora) + ":Mensagem",
 										tMsg);
-								//System.out.println(jedis.smembers(tApelidoDigitado + ":" + tDtAtualMsg.format(sFormatadorHora) + ":Para "));
-								
-								Long nSaidas = jedis.incr(tApelidoDigitado+"--saida");
-								jedis.zadd(tApelidoDigitado+"--saida ",nSaidas,tApelidoDigitado + ":" + tDtAtualMsg.format(sFormatadorHora));
+								// System.out.println(jedis.smembers(tApelidoDigitado + ":" +
+								// tDtAtualMsg.format(sFormatadorHora) + ":Para "));
+
+								Long nSaidas = jedis.incr(tApelidoDigitado + "--saida");
+								jedis.zadd(tApelidoDigitado + "--saida ", nSaidas,
+										tApelidoDigitado + ":" + tDtAtualMsg.format(sFormatadorHora));
 
 								String[] textoSeparado = tPara.split(",");
 								// System.out.println(Arrays.toString(textoSeparado));
@@ -154,78 +156,162 @@ public class RedisJava {
 									// System.out.println(textoSeparado[i]);
 
 									Long nEntradas = jedis.incr(textoSeparado[i] + "--entr ");
-									
-									jedis.zadd(textoSeparado[i]+"--entr  ", nEntradas,tApelidoDigitado + ":" + tDtAtualMsg.format(sFormatadorHora));
+
+									jedis.zadd(textoSeparado[i] + "--entr  ", nEntradas,
+											tApelidoDigitado + ":" + tDtAtualMsg.format(sFormatadorHora));
 								}
 								break casos2;
 
 							case 2:
 
 								System.out.println("Principais");
-								
-								Long contadorentradas = jedis.zlexcount(tApelidoDigitado+"--entr  ", "-" , "+");
-								System.out.println( "Você tem "+contadorentradas+" mensagens.");
-								for (int i = 0; i < contadorentradas; i++) {
-								
-									System.out.println((1+i) +" "+jedis.zrange(tApelidoDigitado + "--entr  ", i , i));
-								
-								}
-								
-								System.out.println();
-								Long tVisualisar = Leitor.readLong("Visualisar mensagem:");
-								if (tVisualisar == 0) {
+
+								Long contadorentradas = jedis.zlexcount(tApelidoDigitado + "--entr  ", "-", "+");
+								System.out.println("Você tem " + contadorentradas + " mensagens.");
+
+								if (contadorentradas == 0) {
+
 									break casos2;
 								} else {
+									for (int i = 0; i < contadorentradas; i++) {
 
-									Set<String> tMsgV = jedis.zrange(tApelidoDigitado + "--entr  ", tVisualisar - 1,
-											tVisualisar - 1);
+										System.out.println(
+												(1 + i) + " " + jedis.zrange(tApelidoDigitado + "--entr  ", i, i));
 
-									String stringCortando = (tMsgV).toString();
-									String tMsgV2 = stringCortando.substring(1, stringCortando.length() - 1);
+									}
 
-									System.out.println(
-											jedis.get(tMsgV2 + ":De") + ": " + jedis.get(tMsgV2 + ":Mensagem"));
 									System.out.println();
+									Long tVisualisar = Leitor.readLong("Visualisar mensagem:");
 
-									String tResp = Leitor.readString("Resposta:");
-
-									if (tResp == "") {
+									if (tVisualisar == 0) {
 										break casos2;
 									} else {
 
-										Long nEntradasResp = jedis.incr(tMsgV2 + ":respostas");
-										jedis.zadd(tMsgV + ":respostas", nEntradasResp, tResp);
+										Set<String> tMsgV = jedis.zrange(tApelidoDigitado + "--entr  ", tVisualisar - 1,
+												tVisualisar - 1);
+
+										String stringCortando = (tMsgV).toString();
+										String tMsgV2 = stringCortando.substring(1, stringCortando.length() - 1);
+
+										System.out.println(
+												jedis.get(tMsgV2 + ":De") + ": " + jedis.get(tMsgV2 + ":Mensagem"));
+										System.out.println();
+
+										String tResp = Leitor.readString("Resposta:");
+
+										if (tResp == "") {
+											break casos2;
+										} else {
+											LocalDateTime tDtAtualMsg2 = LocalDateTime.now();
+
+											Long nEntradasResp = jedis.incr(tMsgV2 + "--respo  ");
+											jedis.zadd(tMsgV2 + "--respo ", nEntradasResp,
+													tApelidoDigitado + ":" + tDtAtualMsg2.format(sFormatadorHora));
+											String tPara2 = jedis.get(tMsgV2 + ":De");
+
+											jedis.sadd(tApelidoDigitado + ":" + tDtAtualMsg2.format(sFormatadorHora)
+													+ ":Para", tPara2);
+											jedis.set(tApelidoDigitado + ":" + tDtAtualMsg2.format(sFormatadorHora)
+													+ ":De", tApelidoDigitado);
+											jedis.set(tApelidoDigitado + ":" + tDtAtualMsg2.format(sFormatadorHora)
+													+ ":Mensagem", tResp);
+
+											Long nSaidas2 = jedis.incr(tApelidoDigitado + "--saida");
+											jedis.zadd(tApelidoDigitado + "--saida ", nSaidas2,
+													tApelidoDigitado + ":" + tDtAtualMsg2.format(sFormatadorHora));
+
+											Long nEntradas2 = jedis.incr(tPara2 + "--entr ");
+
+											jedis.zadd(tPara2 + "--entr  ", nEntradas2,
+													tApelidoDigitado + ":" + tDtAtualMsg2.format(sFormatadorHora));
+
+										}
+										/* ZADD ZE:20102017092745:RESPOSTAS 1 "NEMEU:20102017092855" */
 									}
-									/* ZADD ZE:20102017092745:RESPOSTAS 1 "NEMEU:20102017092855" */
 								}
 								break casos2;
 
 							case 3:
 
 								System.out.println("Principais");
-								
-								Long contadorsaidas = jedis.zlexcount(tApelidoDigitado+"--saida ", "-" , "+");
-								System.out.println( "Você enviou "+contadorsaidas+" mensagens.");
-								
-								for (int i = 0; i < contadorsaidas; i++) {
-								
-									System.out.println((1+i)+" "+jedis.zrange(tApelidoDigitado + "--saida ", i , i));
-								}						
-								
-								System.out.println();
-								Long tVisualisarSaida = Leitor.readLong("Visualisar mensagem:");
-								if (tVisualisarSaida == 0 || tVisualisarSaida < 0) {
+
+								Long contadorsaidas = jedis.zlexcount(tApelidoDigitado + "--saida ", "-", "+");
+
+								System.out.println("Você enviou " + contadorsaidas + " mensagens.");
+
+								if (contadorsaidas == 0) {
+
 									break casos2;
 								} else {
-									Set<String> tMsgV = jedis.zrange(tApelidoDigitado+"--saida ",
-											tVisualisarSaida - 1, tVisualisarSaida - 1);
 
-									String stringCortando = (tMsgV).toString();
-									String tMsgV2 = stringCortando.substring(1, stringCortando.length() - 1);
+									for (int i = 0; i < contadorsaidas; i++) {
 
-									System.out.println(jedis.smembers(tMsgV2 +":Para"));
-									System.out.println(jedis.get(tMsgV2+":Mensagem"));
-									System.out.println();
+										System.out.println(
+												(1 + i) + " " + jedis.zrange(tApelidoDigitado + "--saida ", i, i));
+									}
+
+									enquanto9: while (true) {
+
+										System.out.println();
+										Long tVisualisarSaida = Leitor.readLong("Visualisar mensagem:");
+
+										if (tVisualisarSaida == 0 || tVisualisarSaida < 0) {
+											break casos2;
+										} else {
+
+											Set<String> tMsgV3 = jedis.zrange(tApelidoDigitado + "--saida ",
+													tVisualisarSaida - 1, tVisualisarSaida - 1);
+
+											String stringCortando = (tMsgV3).toString();
+											String tMsgV4 = stringCortando.substring(1, stringCortando.length() - 1);
+
+											System.out.println("Para: " + jedis.smembers(tMsgV4 + ":Para"));
+											System.out.println(jedis.get(tMsgV4 + ":Mensagem"));
+
+											Long contadorrespostas = jedis.zlexcount(tMsgV4 + "--respo ", "-", "+");
+											System.out.println();
+											System.out.println("Você possui " + contadorrespostas + " respostas.");
+											
+											
+											if (contadorrespostas == 0) {
+												break enquanto9;
+											} else {
+												System.out.println("Respostas:");
+												// para mostrar os nomes das pessoas que enviaram as respostas
+												for (int i = 0; i < contadorrespostas; i++) {
+													Set<String> tMsgV5 = jedis.zrange(tMsgV4 + "--respo ", i, i);
+
+													String stringCortando2 = (tMsgV5).toString();
+													String tTirandochave = stringCortando2.substring(1,
+															stringCortando2.length() - 1);
+
+													String tNome2 = jedis.get(tTirandochave + ":De");
+
+													System.out.println((1+i) + "- " + tNome2);
+												}
+
+												System.out.println();
+												Long tVisualisarResposta = Leitor.readLong("Visualisar mensagem:");
+
+												if (tVisualisarResposta == 0 || tVisualisarResposta < 0) {
+													break casos2;
+												} else {
+
+													Set<String> tMsgV7 = jedis.zrange(tMsgV4 + "--respo ",
+															tVisualisarResposta - 1, tVisualisarResposta - 1);
+													String stringCortando3 = (tMsgV7).toString();
+													String tTirandochave2 = stringCortando3.substring(1,
+															stringCortando3.length() - 1);
+
+													System.out.println(jedis.get(tTirandochave2 + ":Mensagem"));
+
+													String opf = Leitor.readString("Enter para Sair!");
+													if (opf == "")
+														break enquanto9;
+												}
+											}
+										}
+									}
 								}
 								break casos2;
 
@@ -233,8 +319,8 @@ public class RedisJava {
 								System.out.println();
 								System.out.println("Visualizar os Dados");
 
-								System.out.println("Apelido: "+jedis.hget("Usuario:"+tApelidoDigitado,"Apelido"));
-								System.out.println("Nome: " + jedis.hget("Usuario:"+tApelidoDigitado,"Nome"));
+								System.out.println("Apelido: " + jedis.hget("Usuario:" + tApelidoDigitado, "Apelido"));
+								System.out.println("Nome: " + jedis.hget("Usuario:" + tApelidoDigitado, "Nome"));
 								System.out.println("Data de Cadastro: "
 										+ jedis.hget("Usuario:" + tApelidoDigitado, "DataCadastro"));
 								System.out.println();
